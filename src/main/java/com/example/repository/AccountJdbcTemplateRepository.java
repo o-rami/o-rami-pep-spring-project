@@ -1,12 +1,15 @@
 package com.example.repository;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.entity.Account;
+import com.example.repository.mappers.AccountMapper;
 
 import java.util.List;
-import java.util.ArrayList;
 import java.sql.*;
 
 
@@ -15,83 +18,47 @@ public class AccountJdbcTemplateRepository implements AccountRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    public AccountRepository(JdbcTemplate jdbcTemplate) {
+    public AccountJdbcTemplateRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
     
     @Override
+    @Transactional
     public Account createAccount(Account account) {
-        Connection connection = ConnectionUtil.getConnection();
-        
-        try {
-            String sql = "INSERT INTO account (username, password) VALUES (?, ?)";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            
-            preparedStatement.setString(1, account.getUsername());
-            preparedStatement.setString(2, account.getPassword());
+        final String sql = "INSERT INTO account (username, password) VALUES (?,?);";
 
-            preparedStatement.executeUpdate();
-            ResultSet rs = preparedStatement.getGeneratedKeys();
-            if (rs.next()) {
-                int generatedId = (int) rs.getLong(1);
-                return new Account(
-                    generatedId, 
-                    account.getUsername(), 
-                    account.getPassword()
-                );
-            }
-        } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        int rowsAffected = jdbcTemplate.update(connection -> {
+            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setString(1, account.getUsername());
+            ps.setString(2, account.getPassword());
+            return ps;
+        }, keyHolder);
+
+        if (rowsAffected <= 0) {
+            return null;
         }
-        return null;
+
+        account.setAccountId(keyHolder.getKey().intValue());
+        return account;
     }
 
 
     @Override
+    @Transactional
     public List<Account> getAllAccounts() {
         final String sql = "SELECT * FROM account";
-        return jdbcTemplate.query(sql, )
-        Connection connection = ConnectionUtil.getConnection();
-        List<Account> accounts = new ArrayList<>();
-        
-        try {
-            String sql = "select * from account;";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            ResultSet rs = preparedStatement.executeQuery();
-            while (rs.next()) {
-                Account account = new Account(
-                    rs.getInt("account_id"), 
-                    rs.getString("username"),
-                    rs.getString("password")
-                );
-                accounts.add(account);
-                }
-        } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
-        }
-        return accounts;
+        return jdbcTemplate.query(sql, new AccountMapper());
     }
 
+    @Override
+    @Transactional
     public Account getAccountByUsername(String username) {
-        Connection connection = ConnectionUtil.getConnection();
-
-        try {
-            String sql = "SELECT * FROM account WHERE username = ?;";
-            PreparedStatement ps = connection.prepareStatement(sql);
-            ps.setString(1, username);
-            
-            ResultSet rs = ps.executeQuery();
-            while(rs.next()) {
-                Account accountToReturn = new Account(
-                    rs.getInt("account_id"),
-                    rs.getString("username"),
-                    rs.getString("password")
-                );
-                return accountToReturn;
-            }
-        } catch (SQLException ex) {
-            System.out.println(ex.getMessage());
-        }
-        return null;
+        final String sql = "SELECT * FROM account WHERE username = ?";
+        Account result = jdbcTemplate.query(sql, new AccountMapper(), username)
+            .stream()
+            .findFirst()
+            .orElse(null);
+        return result;
     }
 }
