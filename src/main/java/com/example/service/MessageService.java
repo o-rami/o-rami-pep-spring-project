@@ -1,63 +1,85 @@
-// package com.example.service;
+package com.example.service;
 
-// import repository.MessageRepository;
-// import entity.Message;
-// import java.util.List;
+import com.example.repository.MessageRepository;
 
-// import org.springframework.stereotype.Service;
+import javassist.NotFoundException;
 
-// @Service
-// public class MessageService {
+import com.example.entity.Message;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Optional;
 
-//     MessageDao messageDao;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.stereotype.Service;
 
-//     public MessageService(){
-//         messageDao = new MessageDao();
-//     }
+@Service
+public class MessageService {
 
-//     public MessageService(MessageDao messageDao) {
-//         this.messageDao = messageDao;
-//     }
+    private final MessageRepository messageRepository;
+    
+    @Autowired
+    public MessageService(MessageRepository messageRepository) {
+        this.messageRepository = messageRepository;
+    }
 
-//     public Message createMessage(Message message) {
-//         if (message.getMessage_text().isBlank() 
-//             || message.getMessage_text().isEmpty()
-//             || message.getMessage_text().length() > 255) {
-//             return null;
-//         }
-//         if (messageDao.getAllMessagesByUserId(message.getPosted_by()).isEmpty()) {
-//             return null;
-//         }
+    public Message createMessage(Message message) {
+        if (message.getMessageText().isBlank() 
+            || message.getMessageText().isEmpty()
+            || message.getMessageText().length() > 255) {
+            return null;
+        }
 
-//         List<Message> messages = messageDao.getAllMessages();
-//         if (messages.contains(message)) {
-//             return null;
-//         }
-//         return messageDao.createMessage(message);
-//     }
+        List<Message> messages = (List<Message>) messageRepository.findAll();
+        if (messages.contains(message)) {
+            return null;
+        }
 
-//     public List<Message> getAllMessages() {
-//         return messageDao.getAllMessages();
-//     }
+        return messageRepository.save(message);
+    }
 
-//     public List<Message> getAllMessagesByUserId(int accountId) {
-//         return messageDao.getAllMessagesByUserId(accountId);
-//     }
+    public List<Message> getAllMessages() {
+        return (List<Message>) messageRepository.findAll();
+    }
 
-//     public Message getMessageById(int messageId) {
-//         return messageDao.getMessageById(messageId);
-//     }
+    public List<Message> getAllMessagesByUserId(int postedBy) {
+        List<Optional<Message>> listOfMessages = messageRepository.findAllByPostedBy(postedBy);
+        List<Message> result = new ArrayList<>();
+        for (Optional<Message> m : listOfMessages) {
+            if (m.get() != null) {
+                result.add(m.get());
+            }
+        }
+        return result;
+    }
 
-//     public Message updateMessage(int messageId, Message message) {
-//         if (messageDao.getMessageById(messageId) == null) {
-//             return null;
-//         }
-//         message.setMessage_id(messageId);
-//         messageDao.updateMessage(messageId, message);
-//         return message;
-//     }
+    public Message getMessageById(int messageId) throws NotFoundException {
+        return messageRepository.findById(messageId)
+            .orElseThrow(() -> new NotFoundException("Message#" + messageId + " was not found."));
+    }
 
-//     public boolean deleteMessageById(int messageId) {
-//         return messageDao.deleteMessageById(messageId);
-//     }
-// }
+    public void updateMessage(Message message) {
+        if (messageRepository.existsById(message.getMessageId())) {
+            messageRepository.save(message);
+        }
+    }
+
+    public void patchMessage(Message message, String messageText) {
+        if (validateMessageText(messageText)) {
+            return;
+        }
+        if (messageRepository.existsById(message.getMessageId())) {
+            message.setMessageText(messageText);
+            messageRepository.save(message);
+        }
+    }
+
+    public void deleteMessageById(int messageId) {
+        messageRepository.deleteById(messageId);
+    }
+
+    private boolean validateMessageText(String text) {
+        return text.isBlank() 
+        || text.isEmpty()
+        || text.length() > 255;
+    }
+}

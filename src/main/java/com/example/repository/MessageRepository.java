@@ -1,19 +1,16 @@
 package com.example.repository;
 
+// import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+
 import com.example.entity.Message;
+import java.util.Optional;
 import java.util.List;
 
-public interface MessageRepository {
+@Repository
+public interface MessageRepository extends CrudRepository<Message, Integer>{
+    
+    List<Optional<Message>> findAllByPostedBy(int postedBy);
 
-    public Message createMessage(Message message);
-
-    public List<Message> getAllMessages();
-
-    public List<Message> getAllMessagesByUserId(int accountId);
-
-    public Message getMessageById(int messageId);
-
-    public boolean updateMessage(int messageId, Message message);
-
-    public boolean deleteMessageById(int messageId);
 }
