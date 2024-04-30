@@ -47,12 +47,13 @@ public class SocialMediaController {
 
     // POST             200/400                             "/messages"
     @PostMapping("/messages")
-    public ResponseEntity<Message> addMessage(@RequestBody Message message) {
+    public ResponseEntity<?> addMessage(@RequestBody Message message) {
         Message messageToAdd = messageService.createMessage(message);
-        if (messageToAdd != null) {
+        Message creator = messageService.getMessageById(message.getPostedBy());
+        if (messageToAdd != null && creator != null) {
             return new ResponseEntity<>(messageToAdd, HttpStatus.OK);
         }
-        return new ResponseEntity<>(messageToAdd, HttpStatus.BAD_REQUEST);
+        return ResponseEntity.status(400).body("");
     }
 
     // PATCH            200/400                             "messages/{message_id}"

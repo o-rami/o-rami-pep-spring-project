@@ -19,7 +19,7 @@ public class MessageService {
     }
 
     public Message createMessage(Message message) {
-        if (!validateMessageText(message.getMessageText())) {
+        if (validateMessageText(message.getMessageText())) {
             return null;
         }
         return messageRepository.save(message);
@@ -64,8 +64,8 @@ public class MessageService {
     }
 
     private boolean validateMessageText(String text) {
-        return !text.isBlank() 
-            || !text.isEmpty()
-            || text.length() <= 255;
+        return text.isBlank() 
+            || text.isEmpty()
+            || text.length() > 255;
     }
 }
