@@ -3,14 +3,16 @@ package com.example.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import com.example.service.AccountService;
 import com.example.service.MessageService;
+import com.example.entity.Account;
 import com.example.entity.Message;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * TODO: You will need to write your own endpoints and handlers for your controller using Spring. The endpoints you will need can be
@@ -23,16 +25,35 @@ import java.util.List;
 public class SocialMediaController {
     
     private final MessageService messageService;
+    private final AccountService accountService;
     
     @Autowired
-    SocialMediaController(MessageService messageService) {
+    SocialMediaController(MessageService messageService, AccountService accountService) {
         this.messageService = messageService;
+        this.accountService = accountService;
     }
     
-    // POST             200/400                             "/register"
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody Account account) {
+        if (account.getUsername().isBlank() || account.getUsername().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Username cannot be empty");
+        } else if (account.getPassword().length() < 4) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Password length must be greater than 4");
+        } else if (accountService.getAccountByUsername(account.getUsername()).isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Duplicate Username");
+        }
+        return new ResponseEntity<Account>(accountService.createAccount(account.getUsername(), account.getPassword()), HttpStatus.OK);
+    }
 
     // POST             200/401                             "/login"
-
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody Account account) {
+        if (accountService.login(account.getUsername(), account.getPassword())) {
+            Optional<Account> user = accountService.getAccountByUsername(account.getUsername());
+            return ResponseEntity.ok(user.get());
+        }
+        throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
+    }
     
     @GetMapping("/messages")
     public ResponseEntity<List<Message>> findAllMessages() {
@@ -66,16 +87,15 @@ public class SocialMediaController {
     //     return ResponseEntity.badRequest();
     // }
 
-    // DELETE           200                                 "/messages/{message_id}"
-    // @DeleteMapping("/messages/{messageId}")
-    // public @ResponseBody ResponseEntity<?> deleteById(@PathVariable int messageId) {
-    //     Message toDelete = messageService.getMessageById(messageId);
-    //     if (toDelete != null) {
-    //         messageService.deleteMessageById(messageId);
-    //         return ResponseEntity.ok(1);
-    //     }
-    //     return ResponseEntity.ok();
-    // }
+    @DeleteMapping("/messages/{messageId}")
+    public @ResponseBody ResponseEntity<?> deleteById(@PathVariable int messageId) {
+        Message toDelete = messageService.getMessageById(messageId);
+        if (toDelete != null) {
+            messageService.deleteMessageById(messageId);
+            return ResponseEntity.ok(1);
+        }
+        return ResponseEntity.ok("");
+    }
     
 
     // GET              200                                 "/accounts/{account_id}/messages"
