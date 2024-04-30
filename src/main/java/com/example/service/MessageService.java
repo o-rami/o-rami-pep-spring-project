@@ -1,9 +1,6 @@
 package com.example.service;
 
 import com.example.repository.MessageRepository;
-
-import javassist.NotFoundException;
-
 import com.example.entity.Message;
 import java.util.Optional;
 import java.util.List;
@@ -44,18 +41,18 @@ public class MessageService {
         return null;
     }
 
-    public void updateMessage(Message message) {
-        Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
-        if (messageOptional.isPresent()) {
-            messageRepository.save(message);
-        }
-    }
+    // public void updateMessage(Message message) {
+    //     Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
+    //     if (messageOptional.isPresent()) {
+    //         messageRepository.save(message);
+    //     }
+    // }
 
-    public Message patchMessage(Message message, String messageText) {
+    public Message patchMessage(int messageId, String messageText) {
         if (!validateMessageText(messageText)) {
-            return message;
+            return null;
         }
-        Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
+        Optional<Message> messageOptional = messageRepository.findById(messageId);
         if (messageOptional.isPresent()) {
             messageOptional.get().setMessageText(messageText);
         }
@@ -68,7 +65,7 @@ public class MessageService {
 
     private boolean validateMessageText(String text) {
         return !text.isBlank() 
-        || !text.isEmpty()
-        || text.length() <= 255;
+            || !text.isEmpty()
+            || text.length() <= 255;
     }
 }
