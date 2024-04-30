@@ -5,6 +5,7 @@ import com.example.repository.MessageRepository;
 import javassist.NotFoundException;
 
 import com.example.entity.Message;
+import java.util.Optional;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.*;
@@ -24,27 +25,28 @@ public class MessageService {
         if (!validateMessageText(message.getMessageText())) {
             return null;
         }
-        if (messageRepository.existsById(message.getMessageId())) {
-            return null;
-        }
         return messageRepository.save(message);
     }
 
     public List<Message> getAllMessages() {
-        return (List<Message>) messageRepository.findAll();
+        return messageRepository.findAll();
     }
 
     public List<Message> getAllMessagesByUserId(int postedBy) {
         return messageRepository.findByPostedBy(postedBy);
     }
 
-    public Message getMessageById(int messageId) throws NotFoundException {
-        return messageRepository.findById(messageId)
-            .orElseThrow(() -> new NotFoundException("Message#" + messageId + " was not found."));
+    public Message getMessageById(int messageId) {
+        Optional<Message> messageOptional = messageRepository.findById(messageId);
+        if (messageOptional.isPresent()) {
+            return messageOptional.get();
+        }
+        return null;
     }
 
     public void updateMessage(Message message) {
-        if (messageRepository.existsById(message.getMessageId())) {
+        Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
+        if (messageOptional.isPresent()) {
             messageRepository.save(message);
         }
     }
@@ -53,10 +55,11 @@ public class MessageService {
         if (!validateMessageText(messageText)) {
             return message;
         }
-        if (messageRepository.existsById(message.getMessageId())) {
-            message.setMessageText(messageText);
+        Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
+        if (messageOptional.isPresent()) {
+            messageOptional.get().setMessageText(messageText);
         }
-        return messageRepository.save(message);
+        return messageRepository.save(messageOptional.get());
     }
 
     public void deleteMessageById(int messageId) {

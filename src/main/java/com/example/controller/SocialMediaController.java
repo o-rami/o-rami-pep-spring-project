@@ -2,6 +2,8 @@ package com.example.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import com.example.service.MessageService;
@@ -16,44 +18,44 @@ import java.util.List;
  * refer to prior mini-project labs and lecture materials for guidance on how a controller may be built.
  */
 
-@RestController
+@Controller
 public class SocialMediaController {
-
+    
     private final MessageService messageService;
-
+    
     @Autowired
     SocialMediaController(MessageService messageService) {
         this.messageService = messageService;
     }
+    
+    // POST             200/400                             "/register"
+    
+    // POST             200/401                             "/login"
+    
 
+    // GET                                                  "/messages"
     @GetMapping("/messages")
-    @ResponseStatus(HttpStatus.OK)
-    public List<Message> findAllMessages() {
-        return messageService.getAllMessages();
+    public @ResponseBody ResponseEntity<List<Message>> findAllMessages() {
+        return new ResponseEntity<List<Message>>(messageService.getAllMessages(), HttpStatus.OK);
     }
+    
 
-    // @GetMapping("/messages/{messageId}")
-    // @ResponseStatus()
-    // public ResponseEntity<Message> findMessageById(@PathVariable int messageId) {
-    //     return messageService.getMessageById(messageId);
-    // }
+    // GET              200                                 "/messages/{message_id}"
+    @GetMapping("/messages/{messageId}")
+    public @ResponseBody ResponseEntity<Message> findMessageById(@PathVariable int messageId) {
+        return new ResponseEntity<>(messageService.getMessageById(messageId), HttpStatus.OK);
+    }
+    
 
-    // @PostMapping("/messages")
-    // @ResponseStatus(HttpStatus.CREATED)
-    // public Message addMessage(@RequestBody Message message) {
-        
-    // }
+    // POST             200/400                             "/messages"
 
 
-    // @ExceptionHandler({RuntimeException.class, CustomException.class})
-    // @ResponseStatus(HttpStatus.NOT_FOUND)
-    // public String handleNotFound(RuntimeException ex) {
-    //     return ex.getMessage();
-    // }
+    // PATCH            200/400                             "messages/{message_id}"
 
-    // @ExceptionHandler(MissingServletRequestParameterException.class)
-    // @ResponseStatus(HttpStatus.BAD_REQUEST)
-    // public String handleMissingParams(MissingServletRequestParameterException ex) {
-    //     return ex.getParameterName() + " is missing in the query parameters and is required.";
-    // }
+
+    // DELETE           200                                 "/messages/{message_id}"
+    
+
+    // GET              200                                 "/accounts/{account_id}/messages"
+    
 }
