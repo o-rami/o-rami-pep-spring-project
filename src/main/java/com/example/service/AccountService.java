@@ -45,4 +45,9 @@ public class AccountService {
     public Optional<Account> getAccountByUsernameAndPassword(String username, String password) {
         return accountRepository.findByUsernameAndPassword(username, password);
     }
+
+    public Optional<Account> getAccountById(int accountId) {
+        return accountRepository.findById(accountId);
+    }
+
 }

@@ -45,7 +45,6 @@ public class SocialMediaController {
         return new ResponseEntity<Account>(accountService.createAccount(account.getUsername(), account.getPassword()), HttpStatus.OK);
     }
 
-    // POST             200/401                             "/login"
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody Account account) {
         if (accountService.login(account.getUsername(), account.getPassword())) {
@@ -62,44 +61,52 @@ public class SocialMediaController {
     
     @GetMapping("/messages/{messageId}")
     public ResponseEntity<Message> findMessageById(@PathVariable int messageId) {
-        return new ResponseEntity<>(messageService.getMessageById(messageId), HttpStatus.OK);
+        return new ResponseEntity<>(messageService.getMessageById(messageId).get(), HttpStatus.OK);
+    }
+
+    @GetMapping("/accounts/{accountId}/messages")
+    public ResponseEntity<List<Message>> findMessagesByUserId(@PathVariable int accountId) {
+        return new ResponseEntity<List<Message>>(messageService.getAllMessagesByUserId(accountId), HttpStatus.OK);
     }
     
-
-    // POST             200/400                             "/messages"
     @PostMapping("/messages")
     public ResponseEntity<?> addMessage(@RequestBody Message message) {
-        Message messageToAdd = messageService.createMessage(message);
-        Message creator = messageService.getMessageById(message.getPostedBy());
-        if (messageToAdd != null && creator != null) {
-            return new ResponseEntity<>(messageToAdd, HttpStatus.OK);
+        Optional<Account> accountOptional = accountService.getAccountById(message.getPostedBy());
+        if (!accountOptional.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "User does not exist");
+        } else if (message.getMessageText().isBlank() || message.getMessageText().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be blank");
+        } else if (message.getMessageText().length() > 255) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be more than 255 characters long");
         }
-        return ResponseEntity.status(400).body("");
+        Message messageToAdd = messageService.createMessage(message);
+        return ResponseEntity.status(200).body(messageToAdd);
     }
 
     // PATCH            200/400                             "messages/{message_id}"
-    // @PatchMapping("/messages/{messageId}")
-    // public ReponseEntity<?> patchMessageText(@PathVariable int messageId, @RequestBody String messageText) {
-    //     Message message = messageService.patchMessage(messageId, messageText);
-    //     if (message != null) {
-    //         return new ResponseEntity<Message>(message, HttpStatus.OK);
-    //     }
-    //     return ResponseEntity.badRequest();
-    // }
+    @PatchMapping("/messages/{messageId}")
+    public ResponseEntity<Message> patchMessageText(@PathVariable int messageId, @RequestBody String messageText) {
+        if (messageText.isBlank() || messageText.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be blank");
+        } else if (messageText.length() > 255) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be more than 255 characters long");
+        } else {
+            Optional<Message> messageOptional = messageService.getMessageById(messageId);
+            if (!messageOptional.isPresent()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message does not exist");
+            }
+        }
+        return new ResponseEntity<Message>(messageService.patchMessage(messageId, messageText), HttpStatus.OK);
+    }
 
     @DeleteMapping("/messages/{messageId}")
-    public @ResponseBody ResponseEntity<?> deleteById(@PathVariable int messageId) {
-        Message toDelete = messageService.getMessageById(messageId);
-        if (toDelete != null) {
+    public ResponseEntity<?> deleteById(@PathVariable int messageId) {
+        Optional<Message> toDelete = messageService.getMessageById(messageId);
+        if (toDelete.isPresent()) {
             messageService.deleteMessageById(messageId);
             return ResponseEntity.ok(1);
         }
         return ResponseEntity.ok("");
     }
-    
-
-    // GET              200                                 "/accounts/{account_id}/messages"
-    // @GetMapping("/accounts/{accountId}/message")
-    // public @ResponseBody
 
 }

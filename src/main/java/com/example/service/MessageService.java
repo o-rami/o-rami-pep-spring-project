@@ -33,12 +33,8 @@ public class MessageService {
         return messageRepository.findByPostedBy(postedBy);
     }
 
-    public Message getMessageById(int messageId) {
-        Optional<Message> messageOptional = messageRepository.findById(messageId);
-        if (messageOptional.isPresent()) {
-            return messageOptional.get();
-        }
-        return null;
+    public Optional<Message> getMessageById(int messageId) {
+        return messageRepository.findById(messageId);
     }
 
     // public void updateMessage(Message message) {
