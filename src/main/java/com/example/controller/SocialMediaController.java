@@ -87,7 +87,6 @@ public class SocialMediaController {
         return ResponseEntity.status(200).body(messageToAdd);
     }
 
-    // PATCH            200/400                             "messages/{message_id}"
     @PatchMapping("/messages/{messageId}")
     public ResponseEntity<?> patchMessageText(@PathVariable int messageId, @RequestBody Message message) {
         if (message.getMessageText().isBlank() || message.getMessageText().isEmpty() || message.getMessageText().trim().isBlank()) {
