@@ -37,22 +37,24 @@ public class MessageService {
         return messageRepository.findById(messageId);
     }
 
-    // public void updateMessage(Message message) {
-    //     Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
-    //     if (messageOptional.isPresent()) {
-    //         messageRepository.save(message);
-    //     }
-    // }
+    public Message updateMessage(Message message) {
+        Optional<Message> messageOptional = messageRepository.findById(message.getMessageId());
+        if (messageOptional.isPresent()) {
+            return messageRepository.save(message);
+        }
+        return null;
+    }
 
-    public Message patchMessage(int messageId, String messageText) {
+    public Optional<Message> patchMessage(int messageId, String messageText) {
         if (!validateMessageText(messageText)) {
             return null;
         }
         Optional<Message> messageOptional = messageRepository.findById(messageId);
         if (messageOptional.isPresent()) {
             messageOptional.get().setMessageText(messageText);
+            messageRepository.save(messageOptional.get());
         }
-        return messageRepository.save(messageOptional.get());
+        return messageOptional;
     }
 
     public void deleteMessageById(int messageId) {

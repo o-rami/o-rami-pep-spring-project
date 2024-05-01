@@ -89,18 +89,17 @@ public class SocialMediaController {
 
     // PATCH            200/400                             "messages/{message_id}"
     @PatchMapping("/messages/{messageId}")
-    public ResponseEntity<Message> patchMessageText(@PathVariable int messageId, @RequestBody String messageText) {
-        if (messageText.isBlank() || messageText.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be blank");
-        } else if (messageText.length() > 255) {
+    public ResponseEntity<?> patchMessageText(@PathVariable int messageId, @RequestBody Message message) {
+        if (message.getMessageText().isBlank() || message.getMessageText().isEmpty() || message.getMessageText().trim().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be empty");
+        } else if (message.getMessageText().length() > 255) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message cannot be more than 255 characters long");
-        } else {
-            Optional<Message> messageOptional = messageService.getMessageById(messageId);
-            if (!messageOptional.isPresent()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message does not exist");
-            }
         }
-        return new ResponseEntity<Message>(messageService.patchMessage(messageId, messageText), HttpStatus.OK);
+        Optional<Message> messageOptional = messageService.getMessageById(messageId);
+        if (!messageOptional.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Message does not exist");
+        }
+        return ResponseEntity.ok(1);
     }
 
     @DeleteMapping("/messages/{messageId}")
