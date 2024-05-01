@@ -60,8 +60,12 @@ public class SocialMediaController {
     }
     
     @GetMapping("/messages/{messageId}")
-    public ResponseEntity<Message> findMessageById(@PathVariable int messageId) {
-        return new ResponseEntity<>(messageService.getMessageById(messageId).get(), HttpStatus.OK);
+    public ResponseEntity<?> findMessageById(@PathVariable int messageId) {
+        Optional<Message> messageOptional = messageService.getMessageById(messageId);
+        if (messageOptional.isPresent()) {
+            return new ResponseEntity<>(messageOptional.get(), HttpStatus.OK);
+        }
+        return ResponseEntity.ok("");
     }
 
     @GetMapping("/accounts/{accountId}/messages")
